@@ -66,12 +66,12 @@ model Auction {
 }
 
 model Lot {
-  lotNumber        String                @id @db.Char(8)
+  lotNumber        String                @id 
   artistName       String
   yearProduced     Int
   subject          SubjectClassification
   description      String
-  estimatedPrice   Decimal               @db.Decimal(10, 2)
+  estimatedPrice    Float              
   category         LotCategory
   status           LotStatus              @default(INTAKE)
   archived         Boolean                @default(false)
