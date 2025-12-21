@@ -1,15 +1,146 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// CONFIGURATION
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+
+// ENUMS
+
+
+enum LotCategory {
+  PAINTING
+  DRAWING
+  PHOTOGRAPH
+  SCULPTURE
+  CARVING
+}
+
+enum LotStatus {
+  INTAKE
+  APPRAISAL
+  CATALOGUED
+  PUBLISHED
+  SOLD
+  ARCHIVED
+}
+
+enum AuctionStatus {
+  DRAFT
+  SCHEDULED
+  COMPLETED
+  ARCHIVED
+}
+
+enum SubjectClassification {
+  LANDSCAPE
+  SEASCAPE
+  PORTRAIT
+  FIGURE
+  STILL_LIFE
+  NUDE
+  ANIMAL
+  ABSTRACT
+  OTHER
+}
+
+
+
+// CORE MODELS
+
+model Auction {
+  id          Int           @id @default(autoincrement())
+  auctionDate DateTime?
+  status      AuctionStatus @default(DRAFT)
+  archived    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  lots        Lot[]
+}
+
+model Lot {
+  lotNumber        String                @id @db.Char(8)
+  artistName       String
+  yearProduced     Int
+  subject          SubjectClassification
+  description      String
+  estimatedPrice   Decimal               @db.Decimal(10, 2)
+  category         LotCategory
+  status           LotStatus              @default(INTAKE)
+  archived         Boolean                @default(false)
+
+  auctionId        Int?
+  auction          Auction?               @relation(fields: [auctionId], references: [id])
+
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  paintingDetails   PaintingDetails?
+  drawingDetails    DrawingDetails?
+  photographDetails PhotographDetails?
+  sculptureDetails  SculptureDetails?
+  carvingDetails    CarvingDetails?
+}
+
+
+
+
+CATEGORY DETAIL MODELS
+
+model PaintingDetails {
+  lotNumber  String   @id
+  medium     String
+  framed     Boolean
+  heightCm   Decimal
+  lengthCm   Decimal
+
+  lot        Lot      @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
+}
+
+model DrawingDetails {
+  lotNumber  String   @id
+  medium     String
+  framed     Boolean
+  heightCm   Decimal
+  lengthCm   Decimal
+
+  lot        Lot      @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
+}
+
+model PhotographDetails {
+  lotNumber  String   @id
+  imageType  String
+  heightCm   Decimal
+  lengthCm   Decimal
+
+  lot        Lot      @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
+}
+
+model SculptureDetails {
+  lotNumber  String   @id
+  material   String
+  heightCm   Decimal
+  lengthCm   Decimal
+  widthCm    Decimal
+  weightKg   Decimal
+
+  lot        Lot      @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
+}
+
+model CarvingDetails {
+  lotNumber  String   @id
+  material   String
+  heightCm   Decimal
+  lengthCm   Decimal
+  widthCm    Decimal
+  weightKg   Decimal
+
+  lot        Lot      @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
 }
