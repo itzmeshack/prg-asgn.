@@ -92,7 +92,7 @@ model Lot {
 
 
 
-CATEGORY DETAIL MODELS
+//CATEGORY DETAIL MODELS
 
 model PaintingDetails {
   lotNumber  String   @id
