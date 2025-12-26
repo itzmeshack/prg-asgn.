@@ -23,14 +23,7 @@ enum LotCategory {
   CARVING
 }
 
-enum LotStatus {
-  INTAKE
-  APPRAISAL
-  CATALOGUED
-  PUBLISHED
-  SOLD
-  ARCHIVED
-}
+
 
 enum AuctionStatus {
   DRAFT
@@ -52,36 +45,47 @@ enum SubjectClassification {
 }
 
 
+enum LotStatus {
+  DRAFT
+  LISTED
+  SOLD
+  ARCHIVED
+}
+
+
+
 
 // CORE MODELS
 
 model Auction {
   id          Int           @id @default(autoincrement())
+  name        String
   auctionDate DateTime?
   status      AuctionStatus @default(DRAFT)
   archived    Boolean       @default(false)
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   lots        Lot[]
 }
 
+
 model Lot {
-  lotNumber        String                @id 
-  artistName       String
-  yearProduced     Int
-  subject          SubjectClassification
-  description      String
-  estimatedPrice    Float              
-  category         LotCategory
-  status           LotStatus              @default(INTAKE)
-  archived         Boolean                @default(false)
-
-  auctionId        Int?
-  auction          Auction?               @relation(fields: [auctionId], references: [id])
-
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-
+  id                Int      @id @default(autoincrement())
+  lotNumber         String   @unique
+  artistName        String
+  yearProduced      Int
+  subject           SubjectClassification
+  description       String
+  estimatedPrice    Float
+  category           LotCategory
+  status            LotStatus @default(DRAFT)
+  archived          Boolean   @default(false)
+  auctionId         Int?
+  auction           Auction?  @relation(fields: [auctionId], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  images             LotImage[]
   paintingDetails   PaintingDetails?
   drawingDetails    DrawingDetails?
   photographDetails PhotographDetails?
@@ -89,6 +93,20 @@ model Lot {
   carvingDetails    CarvingDetails?
 }
 
+
+//images 
+
+
+model LotImage {
+  id         Int      @id @default(autoincrement())
+  lotNumber  String
+  filename   String
+  createdAt  DateTime @default(now())
+
+  lot Lot @relation(fields: [lotNumber], references: [lotNumber], onDelete: Cascade)
+
+  @@index([lotNumber])
+}
 
 
 

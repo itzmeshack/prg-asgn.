@@ -1,19 +1,18 @@
 import { prisma } from "../../../lib/prisma";
 import { NextResponse } from "next/server";
 
-
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const artist = searchParams.get("artist");
   const category = searchParams.get("category");
   const subject = searchParams.get("subject");
+  const status = searchParams.get("status");
 
   try {
     const lots = await prisma.lot.findMany({
       where: {
-        archived: false,
+        status: status ?? { not: "ARCHIVED" },
         artistName: artist ? { contains: artist } : undefined,
         category: category ?? undefined,
         subject: subject ?? undefined,
@@ -22,14 +21,13 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(lots);
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: "Failed to search lots" },
+      { error: "Failed to fetch lots" },
       { status: 500 }
     );
   }
 }
-
 
 export async function POST(request: Request) {
   try {
@@ -44,6 +42,7 @@ export async function POST(request: Request) {
         description: body.description,
         estimatedPrice: body.estimatedPrice,
         category: body.category,
+        status: "DRAFT", // 🔒 FORCE VALID ENUM
       },
     });
 
@@ -55,5 +54,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-
