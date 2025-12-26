@@ -8,9 +8,18 @@
     "start": "next start",
     "lint": "eslint"
   },
+
+"prisma": {
+  "seed": "node prisma/seed.js"
+},
+
+
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.19.1",
+    "bcryptjs": "^3.0.3",
     "next": "16.1.0",
+    "next-auth": "^5.0.0-beta.30",
     "prisma": "^6.19.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -23,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

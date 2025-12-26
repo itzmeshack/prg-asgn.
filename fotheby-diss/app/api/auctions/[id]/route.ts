@@ -1,33 +1,41 @@
 import { prisma } from "../../../../lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
-  try {
-    const { lotId, auctionId } = await request.json();
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+  const auctionId = Number(id);
 
-    const lot = await prisma.lot.findUnique({
-      where: { id: lotId },
-    });
+  const { searchParams } = new URL(request.url);
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = Number(searchParams.get("pageSize") ?? 5);
+  const skip = (page - 1) * pageSize;
 
-    if (!lot || lot.status !== "LISTED") {
-      return NextResponse.json(
-        { error: "Only LISTED lots can be assigned to auctions" },
-        { status: 400 }
-      );
-    }
-
-    const updatedLot = await prisma.lot.update({
-      where: { id: lotId },
-      data: {
-        auctionId,
+  const [auction, total] = await Promise.all([
+    prisma.auction.findUnique({
+      where: { id: auctionId },
+      include: {
+        lots: {
+          skip,
+          take: pageSize,
+          orderBy: { createdAt: "desc" },
+        },
       },
-    });
+    }),
+    prisma.lot.count({ where: { auctionId } }),
+  ]);
 
-    return NextResponse.json(updatedLot);
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to assign lot to auction" },
-      { status: 500 }
-    );
+  if (!auction) {
+    return NextResponse.json({ error: "Auction not found" }, { status: 404 });
   }
+
+  return NextResponse.json({
+    auction,
+    page,
+    pageSize,
+    total,
+    totalPages: Math.ceil(total / pageSize),
+  });
 }

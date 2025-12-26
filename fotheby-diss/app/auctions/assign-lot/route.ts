@@ -1,4 +1,4 @@
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -14,13 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lot not found" }, { status: 404 });
     }
 
-    if (lot.status === "SOLD") {
-      return NextResponse.json(
-        { error: "SOLD lots cannot be reassigned" },
-        { status: 400 }
-      );
-    }
-
+    // Lot already assigned and no force flag
     if (lot.auctionId && !force) {
       return NextResponse.json(
         {
@@ -36,7 +30,9 @@ export async function POST(request: Request) {
 
     const updatedLot = await prisma.lot.update({
       where: { id: Number(lotId) },
-      data: { auctionId: Number(auctionId) },
+      data: {
+        auctionId: Number(auctionId),
+      },
     });
 
     return NextResponse.json(updatedLot);
