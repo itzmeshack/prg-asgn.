@@ -16,19 +16,23 @@ export default function HomePage() {
       <section style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         <h1>Fotheby’s Auction House</h1>
 
-        <a
-          href="/dashboard"
-          style={{
-            alignSelf: "flex-start",
-            marginTop: "0.5rem",
-            padding: "0.75rem 1.5rem",
-            border: "2px solid red",
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          Go to Dashboard
-        </a>
+
+       <a
+  href="/dashboard?from=home"
+  style={{
+    alignSelf: "flex-start",
+    marginTop: "0.5rem",
+    padding: "0.75rem 1.5rem",
+    border: "2px solid red",
+    textDecoration: "none",
+    fontWeight: "bold",
+  }}
+>
+  Go to Dashboard
+</a>
+
+
+
 
         <p>
           Fotheby’s is a specialist fine art auction house operating within the
@@ -55,15 +59,15 @@ export default function HomePage() {
             textAlign: "center",
           }}
 
-          
+
         >
-  
+
         </div>
-       <p style={{
-    fontSize: "0.75rem",
-    color: "#666",
-    marginTop: "0.25rem",
-  }}>photo by dau photograph</p>
+        <p style={{
+          fontSize: "0.75rem",
+          color: "#666",
+          marginTop: "0.25rem",
+        }}>photo by dau photograph</p>
         <p>
           Auction catalogues play a critical role in this process, providing
           detailed descriptions, provenance, and estimated values to support
@@ -83,11 +87,11 @@ export default function HomePage() {
           }}
         >
           {[
-            {label: "PAINTINGS & DRAWINGS", img: "/images/painting.jpg",  credit:"credit: AXP photography" },
-            { label: "SCULPTURES & CARVINGS", img: "/images/scupture.jpg",  credit:" credit: photo by lily lili" },
-            { label: "PHOTOGRAPHIC ART", img: "/images/photographic.jpg" ,  credit:" credit: photo by Matheus bertelli"},
+            { label: "PAINTINGS & DRAWINGS", img: "/images/painting.jpg", credit: "credit: AXP photography" },
+            { label: "SCULPTURES & CARVINGS", img: "/images/scupture.jpg", credit: " credit: photo by lily lili" },
+            { label: "PHOTOGRAPHIC ART", img: "/images/photographic.jpg", credit: " credit: photo by Matheus bertelli" },
 
-          ].map(({ label, img, credit}) => (
+          ].map(({ label, img, credit }) => (
             <div
               key={label}
               style={{
@@ -113,19 +117,19 @@ export default function HomePage() {
                   fontSize: "0.9rem",
                 }}
               >
-                
-              </div>
-<p style={{ fontWeight: "bold" }}>{label}</p>
 
-<p
-  style={{
-    fontSize: "0.75rem",
-    color: "#666",
-    marginTop: "0.25rem",
-  }}
->
-  {credit}
-</p>
+              </div>
+              <p style={{ fontWeight: "bold" }}>{label}</p>
+
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#666",
+                  marginTop: "0.25rem",
+                }}
+              >
+                {credit}
+              </p>
 
             </div>
           ))}

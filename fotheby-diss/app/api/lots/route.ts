@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 
 import { NextResponse } from "next/server";
-import { requireStaff } from "@/lib/auth/requireStaff";
+import { requireStaff } from "../../../lib/auth/requireStaff";
 
 export async function POST(req: Request) {
   const ok = await requireStaff();

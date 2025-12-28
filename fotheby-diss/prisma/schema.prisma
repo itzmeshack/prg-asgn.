@@ -54,6 +54,7 @@ enum LotStatus {
 
 
 enum Role {
+  MANAGER
   STAFF
   PUBLIC
 }

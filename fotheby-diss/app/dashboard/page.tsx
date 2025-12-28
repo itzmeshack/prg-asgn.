@@ -14,6 +14,28 @@ type Lot = {
 };
 
 export default function DashboardPage() {
+  /* ============================
+     ROLE SELECTION PROMPT STATE
+     ============================ */
+  const [showPrompt, setShowPrompt] = useState(false);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const fromHome = params.get("from") === "home";
+
+  if (fromHome) {
+    setShowPrompt(true);
+
+    // Remove the flag so it never triggers again
+    window.history.replaceState({}, "", "/dashboard");
+  }
+}, []);
+
+
+
+  /* ============================
+     EXISTING DASHBOARD STATE
+     ============================ */
   const [lots, setLots] = useState<Lot[]>([]);
   const [searchText, setSearchText] = useState("");
   const [artist, setArtist] = useState("");
@@ -68,195 +90,251 @@ export default function DashboardPage() {
   }
 
   return (
-    <main
-      style={{
-        padding: "clamp(1rem, 4vw, 2rem)",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-      }}
-    >
-      {/* HEADER */}
-      <header
+    <>
+      {/* ============================
+         ROLE SELECTION PROMPT
+         ============================ */}
+      {showPrompt && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#000",
+              color: "#fff",
+              border: "2px solid #fff",
+              padding: "2rem",
+              maxWidth: "400px",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            <h2 style={{ marginBottom: "1rem" }}>Dashboard Access</h2>
+
+            <p style={{ marginBottom: "1.5rem", opacity: 0.8 }}>
+              Please choose how you want to continue.
+            </p>
+
+            {/* ADMIN / STAFF */}
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("dashboardRoleChoice");
+                window.location.href = "/login?from=/dashboard";
+              }}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                marginBottom: "1rem",
+                background: "#fff",
+                color: "#000",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              Admin / Staff
+            </button>
+
+            {/* BUYER / SELLER */}
+            <button
+              onClick={() => {
+                sessionStorage.setItem("dashboardRoleChoice", "public");
+                setShowPrompt(false);
+              }}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                background: "#000",
+                color: "#fff",
+                border: "2px solid #fff",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              Buyer / Seller
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ============================
+         ORIGINAL DASHBOARD UI
+         ============================ */}
+      <main
         style={{
+          padding: "clamp(1rem, 4vw, 2rem)",
+          maxWidth: "1200px",
+          margin: "0 auto",
           display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "1rem",
-          borderBottom: "1px solid #ddd",
-          paddingBottom: "1rem",
+          flexDirection: "column",
+          gap: "2rem",
         }}
       >
+        {/* HEADER */}
+        <header
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "1rem",
+            borderBottom: "1px solid #ddd",
+            paddingBottom: "1rem",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link href="/home" style={{ fontWeight: "bold" }}>
+              ← Home
+            </Link>
+            <h1 style={{ margin: 0 }}>
+              Auction Catalogue Dashboard
+            </h1>
+          </div>
+
+          <nav
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.75rem",
+            }}
+          >
+            <Link href="/auctions">Auctions</Link>
+            <Link href="/dashboard/archived">Archived Lots</Link>
+            <Link
+              href="/lots/add"
+              style={{
+                border: "1px solid #000",
+                padding: "0.35rem 0.7rem",
+                fontWeight: "bold",
+              }}
+            >
+              + Add New Lot
+            </Link>
+          </nav>
+        </header>
+
+        {/* FILTERS */}
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "1rem",
+          }}
+        >
+          <input
+            placeholder="Search by lot number or description"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">All Categories</option>
+            <option value="PAINTING">Painting</option>
+            <option value="DRAWING">Drawing</option>
+            <option value="PHOTOGRAPH">Photograph</option>
+            <option value="SCULPTURE">Sculpture</option>
+            <option value="CARVING">Carving</option>
+          </select>
+
+          <select value={subject} onChange={(e) => setSubject(e.target.value)}>
+            <option value="">All Subjects</option>
+            <option value="LANDSCAPE">Landscape</option>
+            <option value="SEASCAPE">Seascape</option>
+            <option value="PORTRAIT">Portrait</option>
+            <option value="FIGURE">Figure</option>
+            <option value="STILL_LIFE">Still Life</option>
+            <option value="ABSTRACT">Abstract</option>
+            <option value="OTHER">Other</option>
+          </select>
+
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="DRAFT">Draft</option>
+            <option value="LISTED">Listed</option>
+            <option value="SOLD">Sold</option>
+          </select>
+        </section>
+
+        {/* RESULTS */}
+        <section style={{ display: "grid", gap: "1rem" }}>
+          {loading && <p>Loading lots…</p>}
+          {!loading && lots.length === 0 && (
+            <p>No matching auction lots found.</p>
+          )}
+
+          {lots.map((lot) => (
+            <div
+              key={lot.id}
+              style={{
+                border: "1px solid #ccc",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.4rem",
+              }}
+            >
+              <strong>Lot {lot.lotNumber}</strong>
+              <span>Artist: {lot.artistName}</span>
+              <span>Category: {lot.category}</span>
+              <span>Subject: {lot.subject}</span>
+              <span>Status: {lot.status}</span>
+              <span>Estimate: £{lot.estimatedPrice}</span>
+
+              <Link href={`/lots/${lot.lotNumber}`}>
+                View Lot Details →
+              </Link>
+
+              {lot.status === "DRAFT" && (
+                <button
+                  style={{ marginTop: "0.5rem" }}
+                  onClick={() => listLot(lot.id)}
+                >
+                  List Lot
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+
+        {/* PAGINATION */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
             gap: "1rem",
-            flexWrap: "wrap",
           }}
         >
-          <Link href="/home" style={{ fontWeight: "bold" }}>
-            ← Home
-          </Link>
-          <h1 style={{ margin: 0, fontSize: "clamp(1.2rem, 4vw, 1.8rem)" }}>
-            Auction Catalogue Dashboard
-          </h1>
+          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            Previous
+          </button>
+
+          <span>
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </button>
         </div>
-
-        <nav
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-          }}
-        >
-          <Link href="/auctions">Auctions</Link>
-          <Link href="/dashboard/archived">Archived Lots</Link>
-          <Link
-            href="/lots/add"
-            style={{
-              border: "1px solid #000",
-              padding: "0.35rem 0.7rem",
-              fontWeight: "bold",
-            }}
-          >
-            + Add New Lot
-          </Link>
-        </nav>
-      </header>
-
-      {/* FILTERS */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "1rem",
-        }}
-      >
-        <input
-          placeholder="Search by lot number or description"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">All Categories</option>
-          <option value="PAINTING">Painting</option>
-          <option value="DRAWING">Drawing</option>
-          <option value="PHOTOGRAPH">Photograph</option>
-          <option value="SCULPTURE">Sculpture</option>
-          <option value="CARVING">Carving</option>
-        </select>
-
-        <select value={subject} onChange={(e) => setSubject(e.target.value)}>
-          <option value="">All Subjects</option>
-          <option value="LANDSCAPE">Landscape</option>
-          <option value="SEASCAPE">Seascape</option>
-          <option value="PORTRAIT">Portrait</option>
-          <option value="FIGURE">Figure</option>
-          <option value="STILL_LIFE">Still Life</option>
-          <option value="ABSTRACT">Abstract</option>
-          <option value="OTHER">Other</option>
-        </select>
-
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="DRAFT">Draft</option>
-          <option value="LISTED">Listed</option>
-          <option value="SOLD">Sold</option>
-        </select>
-      </section>
-
-      {/* RESULTS */}
-      <section style={{ display: "grid", gap: "1rem" }}>
-        {loading && <p>Loading lots…</p>}
-        {!loading && lots.length === 0 && (
-          <p>No matching auction lots found.</p>
-        )}
-
-        {lots.map((lot) => (
-          <div
-            key={lot.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "1rem",
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.4rem",
-            }}
-          >
-            <strong>Lot {lot.lotNumber}</strong>
-            <span>Artist: {lot.artistName}</span>
-            <span>Category: {lot.category}</span>
-            <span>Subject: {lot.subject}</span>
-            <span>Status: {lot.status}</span>
-            <span>Estimate: £{lot.estimatedPrice}</span>
-
-            <Link href={`/lots/${lot.lotNumber}`}>
-              View Lot Details →
-            </Link>
-
-            {lot.status === "DRAFT" && (
-              <button
-                style={{ marginTop: "0.5rem" }}
-                onClick={() => listLot(lot.id)}
-              >
-                List Lot
-              </button>
-            )}
-
-            {lot.status === "SOLD" && (
-              <button
-                style={{
-                  marginTop: "0.5rem",
-                  background: "#7c2d12",
-                  color: "#fff",
-                  border: "none",
-                  padding: "0.4rem 0.8rem",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-                onClick={async () => {
-                  await fetch("/api/lots/archive", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lotId: lot.id }),
-                  });
-                  fetchLots();
-                }}
-              >
-                Archive Lot
-              </button>
-            )}
-          </div>
-        ))}
-      </section>
-
-      {/* PAGINATION */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-          Previous
-        </button>
-
-        <span>Page {page} of {totalPages}</span>
-
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-        >
-          Next
-        </button>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

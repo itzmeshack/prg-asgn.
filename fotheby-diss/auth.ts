@@ -25,7 +25,10 @@ export const { handlers, auth } = NextAuth({
           where: { staffId: credentials.staffId },
         });
 
-        if (!user || user.role !== "STAFF") return null;
+        if (!user || (user.role !== "STAFF" && user.role !== "MANAGER")) {
+  return null;
+}
+
         if (!user.passwordHash) return null;
 
         const valid = await bcrypt.compare(
