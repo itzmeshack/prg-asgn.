@@ -15,23 +15,63 @@ type Lot = {
 
 export default function DashboardPage() {
   /* ============================
-     ROLE SELECTION PROMPT STATE
+     AUTH + UI MODE STATE
+     ============================ */
+  const [authUser, setAuthUser] = useState<null | { role?: string; staffId?: string }>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+
+  // ✅ THIS WAS MISSING BEFORE
+  const [isPublicMode, setIsPublicMode] = useState(false);
+
+  /* ============================
+     LOAD AUTH SESSION
+     ============================ */
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        const s = await res.json();
+
+        console.log("SESSION RESPONSE:", s); // debug
+
+        const role = s?.user?.role;
+        const staffId = s?.user?.staffId;
+
+        if (role && staffId) {
+          setAuthUser({ role, staffId });
+        } else {
+          setAuthUser(null);
+        }
+      } catch {
+        setAuthUser(null);
+      } finally {
+        setAuthLoaded(true);
+      }
+    }
+
+    loadSession();
+  }, []);
+
+  /* ============================
+     ROLE SELECTION PROMPT
      ============================ */
   const [showPrompt, setShowPrompt] = useState(false);
 
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const fromHome = params.get("from") === "home";
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromHome = params.get("from") === "home";
 
-  if (fromHome) {
-    setShowPrompt(true);
+    if (fromHome) {
+      setShowPrompt(true);
 
-    // Remove the flag so it never triggers again
-    window.history.replaceState({}, "", "/dashboard");
-  }
-}, []);
+      // 🔒 reset UI mode when entering from home
+      setIsPublicMode(false);
+      setAuthUser(null);
+      sessionStorage.removeItem("dashboardRoleChoice");
 
-
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, []);
 
   /* ============================
      EXISTING DASHBOARD STATE
@@ -125,10 +165,19 @@ useEffect(() => {
 
             {/* ADMIN / STAFF */}
             <button
-              onClick={() => {
-                sessionStorage.removeItem("dashboardRoleChoice");
-                window.location.href = "/login?from=/dashboard";
-              }}
+            onClick={() => {
+  sessionStorage.removeItem("dashboardRoleChoice");
+
+  // ✅ If already logged in as staff/manager, just close prompt
+  if (authUser && (authUser.role === "STAFF" || authUser.role === "MANAGER")) {
+    setShowPrompt(false);
+    return;
+  }
+
+  // ❌ Otherwise, go to login
+  window.location.href = "/login";
+}}
+
               style={{
                 width: "100%",
                 padding: "0.75rem",
@@ -146,6 +195,7 @@ useEffect(() => {
             <button
               onClick={() => {
                 sessionStorage.setItem("dashboardRoleChoice", "public");
+                setIsPublicMode(true);
                 setShowPrompt(false);
               }}
               style={{
@@ -165,7 +215,7 @@ useEffect(() => {
       )}
 
       {/* ============================
-         ORIGINAL DASHBOARD UI
+         DASHBOARD UI
          ============================ */}
       <main
         style={{
@@ -189,29 +239,14 @@ useEffect(() => {
             paddingBottom: "1rem",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              flexWrap: "wrap",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <Link href="/home" style={{ fontWeight: "bold" }}>
               ← Home
             </Link>
-            <h1 style={{ margin: 0 }}>
-              Auction Catalogue Dashboard
-            </h1>
+            <h1>Auction Catalogue Dashboard</h1>
           </div>
 
-          <nav
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-            }}
-          >
+          <nav style={{ display: "flex", gap: "0.75rem" }}>
             <Link href="/auctions">Auctions</Link>
             <Link href="/dashboard/archived">Archived Lots</Link>
             <Link
@@ -224,6 +259,37 @@ useEffect(() => {
             >
               + Add New Lot
             </Link>
+
+            {/* STAFF / MANAGER UI */}
+            {authLoaded && authUser && !isPublicMode && (
+              <>
+                <span style={{ fontWeight: "bold" }}>
+                  Hi {authUser.role} ({authUser.staffId})
+                </span>
+
+                {authUser.role === "MANAGER" && (
+                  <Link href="/dashboard/staff" style={{ fontWeight: "bold" }}>
+                    Staff
+                  </Link>
+                )}
+
+                <a
+                  href="/api/auth/signout?callbackUrl=/home"
+                  onClick={() => {
+                    setAuthUser(null);
+                    setIsPublicMode(false);
+                  }}
+                  style={{
+                    border: "1px solid #000",
+                    padding: "0.35rem 0.7rem",
+                    fontWeight: "bold",
+                    textDecoration: "none",
+                  }}
+                >
+                  Logout
+                </a>
+              </>
+            )}
           </nav>
         </header>
 
@@ -309,31 +375,6 @@ useEffect(() => {
             </div>
           ))}
         </section>
-
-        {/* PAGINATION */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            gap: "1rem",
-          }}
-        >
-          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-            Previous
-          </button>
-
-          <span>
-            Page {page} of {totalPages}
-          </span>
-
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </button>
-        </div>
       </main>
     </>
   );

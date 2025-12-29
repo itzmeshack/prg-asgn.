@@ -26,8 +26,8 @@ export const { handlers, auth } = NextAuth({
         });
 
         if (!user || (user.role !== "STAFF" && user.role !== "MANAGER")) {
-  return null;
-}
+          return null;
+        }
 
         if (!user.passwordHash) return null;
 
@@ -38,10 +38,18 @@ export const { handlers, auth } = NextAuth({
 
         if (!valid) return null;
 
+        console.log("AUTHORIZE USER:", {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          staffId: user.staffId,
+        });
+
         return {
           id: user.id,
           name: user.name,
           role: user.role,
+          staffId: user.staffId,
         };
       },
     }),
@@ -49,17 +57,16 @@ export const { handlers, auth } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      // Runs at login
       if (user) {
         token.role = (user as any).role;
+        token.staffId = (user as any).staffId;
       }
       return token;
     },
 
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).role = token.role;
-      }
+      (session.user as any).role = token.role;
+      (session.user as any).staffId = token.staffId;
       return session;
     },
   },
