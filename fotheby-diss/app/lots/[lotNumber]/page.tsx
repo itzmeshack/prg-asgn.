@@ -1,5 +1,12 @@
 import Link from "next/link";
+import { auth } from "../../../auth";
 
+
+
+
+/* ============================
+   FETCH LOT (SERVER-SIDE)
+   ============================ */
 async function getLot(lotNumber: string) {
   const res = await fetch(`http://localhost:3000/api/lots/${lotNumber}`, {
     cache: "no-store",
@@ -12,16 +19,26 @@ async function getLot(lotNumber: string) {
   return res.json();
 }
 
+/* ============================
+   LOT DETAIL PAGE
+   ============================ */
 export default async function LotDetailPage({
   params,
 }: {
   params: Promise<{ lotNumber: string }>;
 }) {
-  // ✅ UNWRAP params (THIS IS THE FIX)
+  // 1️⃣ UNWRAP PARAMS
   const { lotNumber } = await params;
 
+  // 2️⃣ FETCH LOT DATA
   const lot = await getLot(lotNumber);
 
+  // 3️⃣ SERVER-SIDE AUTH CHECK (NextAuth v5)
+  const session = await auth();
+  const role = (session?.user as any)?.role;
+  const isStaff = role === "STAFF" || role === "MANAGER";
+
+  // 4️⃣ RENDER
   return (
     <main
       style={{
@@ -33,20 +50,31 @@ export default async function LotDetailPage({
         gap: "2rem",
       }}
     >
+      {/* HEADER */}
       <header style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         <Link href="/dashboard">← Back to Dashboard</Link>
 
-        <Link href={`/lots/${lotNumber}/edit`} style={{ fontWeight: "bold" }}>
-          Edit Lot
-        </Link>
+        {/* STAFF / MANAGER ONLY */}
+        {isStaff && (
+          <>
+            <Link href={`/lots/${lotNumber}/edit`} style={{ fontWeight: "bold" }}>
+              Edit Lot
+            </Link>
 
-        <Link href={`/lots/${lotNumber}/images`} style={{ fontWeight: "bold" }}>
-          Manage Images
-        </Link>
+            <Link
+              href={`/lots/${lotNumber}/images`}
+              style={{ fontWeight: "bold" }}
+            >
+              Manage Images
+            </Link>
+          </>
+        )}
       </header>
 
+      {/* LOT TITLE */}
       <h1>Lot {lot.lotNumber}</h1>
 
+      {/* LOT DETAILS */}
       <section style={{ display: "grid", gap: "1rem" }}>
         <Detail label="Artist" value={lot.artistName} />
         <Detail label="Year Produced" value={lot.yearProduced} />
@@ -55,37 +83,40 @@ export default async function LotDetailPage({
         <Detail label="Estimated Price" value={`£${lot.estimatedPrice}`} />
       </section>
 
+      {/* DESCRIPTION */}
       <section>
         <h2>Description</h2>
         <p>{lot.description}</p>
       </section>
 
-
+      {/* IMAGES (VIEW-ONLY FOR PUBLIC) */}
       <section>
-  <h2>Images</h2>
+        <h2>Images</h2>
 
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-      gap: "1rem",
-    }}
-  >
-    {lot.images?.map((img: any) => (
-      <img
-        key={img.id}
-        src={`/uploads/lots/${lot.lotNumber}/${img.filename}`}
-        alt="Auction item"
-        style={{ width: "100%", border: "1px solid #ccc" }}
-      />
-    ))}
-  </div>
-</section>
-
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "1rem",
+          }}
+        >
+          {lot.images?.map((img: any) => (
+            <img
+              key={img.id}
+              src={`/uploads/lots/${lot.lotNumber}/${img.filename}`}
+              alt="Auction item"
+              style={{ width: "100%", border: "1px solid #ccc" }}
+            />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
 
+/* ============================
+   DETAIL COMPONENT
+   ============================ */
 function Detail({ label, value }: { label: string; value: any }) {
   return (
     <div>

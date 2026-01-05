@@ -8,47 +8,25 @@ export async function GET(request: Request) {
     const q = searchParams.get("q")?.trim();
     const category = searchParams.get("category")?.trim();
     const subject = searchParams.get("subject")?.trim();
+    const status = searchParams.get("status")?.trim(); // ✅ ADD THIS
 
     const where: any = {
       archived: false,
     };
 
-    // --------------------
-    // SEARCH LOGIC (SCHEMA-SAFE)
-    // --------------------
+    // SEARCH
     if (q) {
       where.OR = [
-        // 1️⃣ Artist (ENUM → exact match)
         { artistName: q },
-
-        // 2️⃣ Lot number (STRING → partial or exact)
-        {
-          lotNumber: {
-            contains: q,
-          },
-        },
-
-        // 3️⃣ Description (STRING → partial)
-        {
-          description: {
-            contains: q,
-          },
-        },
+        { lotNumber: { contains: q } },
+        { description: { contains: q } },
       ];
     }
 
-    // --------------------
     // FILTERS
-    // --------------------
-    if (category) {
-      where.category = category;
-    }
-
-    if (subject) {
-      where.subject = subject;
-    }
-
-    console.log("SEARCH PARAMS:", { q, category, subject });
+    if (category) where.category = category;
+    if (subject) where.subject = subject;
+    if (status) where.status = status; // ✅ ADD THIS
 
     const lots = await prisma.lot.findMany({
       where,

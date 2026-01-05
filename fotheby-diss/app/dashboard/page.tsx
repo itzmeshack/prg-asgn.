@@ -129,6 +129,24 @@ export default function DashboardPage() {
     fetchLots();
   }
 
+  // ✅ ADDED: Archive SOLD lots (STAFF/MANAGER only UI will call this)
+  async function archiveLot(lotId: number) {
+    await fetch("/api/lots/archive", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lotId }),
+    });
+    fetchLots();
+  }
+
+  const isStaffMode =
+    authLoaded &&
+    authUser &&
+    sessionStorage.getItem("dashboardRoleChoice") !== "public";
+
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+
   return (
     <>
       {/* ============================
@@ -143,7 +161,7 @@ export default function DashboardPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 9999,
+            zIndex: 0,
           }}
         >
           <div
@@ -151,6 +169,7 @@ export default function DashboardPage() {
               background: "#000",
               color: "#fff",
               border: "2px solid #fff",
+              borderRadius: "20px",
               padding: "2rem",
               maxWidth: "400px",
               width: "100%",
@@ -165,24 +184,23 @@ export default function DashboardPage() {
 
             {/* ADMIN / STAFF */}
             <button
-            onClick={() => {
-  sessionStorage.removeItem("dashboardRoleChoice");
+              onClick={() => {
+                sessionStorage.removeItem("dashboardRoleChoice");
 
-  // ✅ If already logged in as staff/manager, just close prompt
-  if (authUser && (authUser.role === "STAFF" || authUser.role === "MANAGER")) {
-    setShowPrompt(false);
-    return;
-  }
+                // If already logged in as staff/manager, just close prompt
+                if (authUser && (authUser.role === "STAFF" || authUser.role === "MANAGER")) {
+                  setShowPrompt(false);
+                  return;
+                }
 
-  // ❌ Otherwise, go to login
-  window.location.href = "/login";
-}}
-
+                //  Otherwise, go to login
+                window.location.href = "/login";
+              }}
               style={{
                 width: "100%",
                 padding: "0.75rem",
                 marginBottom: "1rem",
-                background: "#fff",
+                background: "#e61414ff",
                 color: "#000",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -228,47 +246,96 @@ export default function DashboardPage() {
         }}
       >
         {/* HEADER */}
+        <div>
+          <h1
+            style={{
+              fontFamily: "Ariel",
+              fontSize: "2.5em",
+              fontWeight: "bold",
+            }}
+          >
+            Dashboard
+          </h1>
+
+          {authLoaded && authUser && !isPublicMode && (
+            <span style={{ fontWeight: "bold", fontFamily: "monospace" }}>
+              Hi {authUser.role} ({authUser.staffId})
+            </span>
+          )}
+        </div>
+
         <header
           style={{
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "1rem",
-            borderBottom: "1px solid #ddd",
-            paddingBottom: "1rem",
+            gap: "clamp(0.75rem, 2vw, 1.25rem)",
+            background: "black",
+            borderRadius: "15px",
+            padding: "clamp(0.75rem, 3vw, 1.25rem)",
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <Link href="/home" style={{ fontWeight: "bold" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              flexShrink: 0,
+            }}
+          >
+            <Link href="/home" style={{ fontWeight: "bold", cursor: "pointer" }}>
               ← Home
             </Link>
-            <h1>Auction Catalogue Dashboard</h1>
           </div>
 
-          <nav style={{ display: "flex", gap: "0.75rem" }}>
-            <Link href="/auctions">Auctions</Link>
-            <Link href="/dashboard/archived">Archived Lots</Link>
-            <Link
-              href="/lots/add"
-              style={{
-                border: "1px solid #000",
-                padding: "0.35rem 0.7rem",
-                fontWeight: "bold",
-              }}
-            >
-              + Add New Lot
-            </Link>
+          <nav
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.75rem",
+              fontFamily: "monospace",
+              width: "100%",
+              justifyContent: "flex-end",
+            }}
+          >
+            {isStaffMode && (
+              <>
+                <Link href="/auctions" style={{ padding: "0.4rem 0.6rem", whiteSpace: "nowrap" }}>
+                  Auctions
+                </Link>
+                <Link
+                  href="/dashboard/archived"
+                  style={{ padding: "0.4rem 0.6rem", whiteSpace: "nowrap" }}
+                >
+                  Archived Lots
+                </Link>
+              </>
+            )}
 
-            {/* STAFF / MANAGER UI */}
+            {isStaffMode && (
+              <Link
+                href="/lots/add"
+                style={{ padding: "0.4rem 0.6rem", whiteSpace: "nowrap" }}
+              >
+                + Add New Lot
+              </Link>
+            )}
+
             {authLoaded && authUser && !isPublicMode && (
               <>
-                <span style={{ fontWeight: "bold" }}>
-                  Hi {authUser.role} ({authUser.staffId})
-                </span>
-
                 {authUser.role === "MANAGER" && (
-                  <Link href="/dashboard/staff" style={{ fontWeight: "bold" }}>
+                  <Link
+                    href="/dashboard/staff"
+                    style={{
+                      color: "red",
+                      fontWeight: "bold",
+                      padding: "0.4rem 0.6rem",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     Staff
                   </Link>
                 )}
@@ -279,11 +346,26 @@ export default function DashboardPage() {
                     setAuthUser(null);
                     setIsPublicMode(false);
                   }}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onTouchStart={() => setIsPressed(true)}
+                  onTouchEnd={() => setIsPressed(false)}
                   style={{
-                    border: "1px solid #000",
-                    padding: "0.35rem 0.7rem",
+                    border: "1px solid #fff",
+                    background: isPressed || isHovered ? "#000" : "red",
+                    color: isPressed || isHovered ? "#fff" : "#000",
+                    transition: "background 0.25s ease, color 0.25s ease",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    padding: "0.5rem 1rem",
                     fontWeight: "bold",
                     textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    minHeight: "40px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    maxWidth: "100%",
                   }}
                 >
                   Logout
@@ -305,6 +387,13 @@ export default function DashboardPage() {
             placeholder="Search by lot number or description"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            style={{
+              border: "none",
+              outline: "none",
+              background: "black",
+              borderRadius: "10px",
+              padding: "10px",
+            }}
           />
 
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -338,42 +427,97 @@ export default function DashboardPage() {
         {/* RESULTS */}
         <section style={{ display: "grid", gap: "1rem" }}>
           {loading && <p>Loading lots…</p>}
-          {!loading && lots.length === 0 && (
-            <p>No matching auction lots found.</p>
-          )}
+          {!loading && lots.length === 0 && <p>No matching auction lots found.</p>}
 
-          {lots.map((lot) => (
-            <div
-              key={lot.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "1rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.4rem",
-              }}
-            >
-              <strong>Lot {lot.lotNumber}</strong>
-              <span>Artist: {lot.artistName}</span>
-              <span>Category: {lot.category}</span>
-              <span>Subject: {lot.subject}</span>
-              <span>Status: {lot.status}</span>
-              <span>Estimate: £{lot.estimatedPrice}</span>
+          {lots
+            .filter((lot) => {
+              // Buyer / Seller: only LISTED lots
+              if (!isStaffMode) return lot.status === "LISTED";
 
-              <Link href={`/lots/${lot.lotNumber}`}>
-                View Lot Details →
-              </Link>
+              // Staff / Manager: all lots
+              return true;
+            })
+            .map((lot) => (
+              <div
+                key={lot.id}
+                style={{
+                  border: "1px solid #ccc",
+                  background: "black",
+                  borderRadius: "15px",
+                  padding: "1rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.4rem",
+                }}
+              >
+                <strong>Lot {lot.lotNumber}</strong>
+                <span>Artist: {lot.artistName}</span>
+                <span>Category: {lot.category}</span>
+                <span>Subject: {lot.subject}</span>
+                <span>Status: {lot.status}</span>
+                <span>Estimate: £{lot.estimatedPrice}</span>
 
-              {lot.status === "DRAFT" && (
-                <button
-                  style={{ marginTop: "0.5rem" }}
-                  onClick={() => listLot(lot.id)}
-                >
-                  List Lot
-                </button>
-              )}
-            </div>
-          ))}
+                <Link href={`/lots/${lot.lotNumber}`} style={{ color: "red" }}>
+                  View Lot Details →
+                </Link>
+
+                {/* ACTIONS (RIGHT SIDE) — STAFF / MANAGER ONLY */}
+                {isStaffMode && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      gap: "0.5rem",
+                      marginTop: "0.75rem",
+                    }}
+                  >
+                    {lot.status === "DRAFT" && (
+                      <button
+                        onClick={() => listLot(lot.id)}
+                        style={{
+                          color: "yellow",
+                          background: "black",
+                          border: "1px solid yellow",
+                          borderRadius: "8px",
+                          padding: "0.4rem 0.7rem",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          outline: "none",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        <span>▸</span>
+                        <span>List</span>
+                      </button>
+                    )}
+
+                    {lot.status === "SOLD" && (
+                      <button
+                        onClick={() => archiveLot(lot.id)}
+                        style={{
+                          color: "#fff",
+                          background: "black",
+                          border: "1px solid #fff",
+                          borderRadius: "8px",
+                          padding: "0.4rem 0.7rem",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          outline: "none",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        <span>🗄</span>
+                        <span>Archive</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
         </section>
       </main>
     </>

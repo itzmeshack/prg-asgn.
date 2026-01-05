@@ -1,8 +1,32 @@
 import { prisma } from "../../../lib/prisma";
-
 import { NextResponse } from "next/server";
 import { requireStaff } from "../../../lib/auth/requireStaff";
 
+/* =========================
+   GET LOTS (PUBLIC + STAFF)
+   ========================= */
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+
+  const lots = await prisma.lot.findMany({
+    where: status ? { status } : undefined,
+    include: {
+      auction: true, // needed for auction assignment UI
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return NextResponse.json({
+    items: lots,
+  });
+}
+
+/* =========================
+   CREATE LOT (STAFF ONLY)
+   ========================= */
 export async function POST(req: Request) {
   const ok = await requireStaff();
   if (!ok) {
@@ -29,4 +53,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json(lot, { status: 201 });
 }
-
