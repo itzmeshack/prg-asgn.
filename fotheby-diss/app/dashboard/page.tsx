@@ -129,7 +129,7 @@ export default function DashboardPage() {
     fetchLots();
   }
 
-  // ✅ ADDED: Archive SOLD lots (STAFF/MANAGER only UI will call this)
+  //  ADDED: Archive SOLD lots (STAFF/MANAGER only UI will call this)
   async function archiveLot(lotId: number) {
     await fetch("/api/lots/archive", {
       method: "POST",
@@ -138,6 +138,19 @@ export default function DashboardPage() {
     });
     fetchLots();
   }
+
+//delete function lot
+async function deleteLot(lotNumber: string) {
+  const confirmDelete = confirm("Are you sure?");
+  if (!confirmDelete) return;
+
+  await fetch(`/api/lots/${lotNumber}/delete`, {
+    method: "DELETE",
+  });
+
+  fetchLots();
+}
+
 
   const isStaffMode =
     authLoaded &&
@@ -512,8 +525,37 @@ export default function DashboardPage() {
                       >
                         <span>🗄</span>
                         <span>Archive</span>
+
+
+                        
                       </button>
+
+
+
+
                     )}
+                    {isStaffMode && (
+  <button
+    onClick={() => deleteLot(lot.lotNumber)}
+    style={{
+      color: "red",
+      background: "black",
+      border: "1px solid red",
+      borderRadius: "8px",
+      padding: "0.4rem 0.7rem",
+      cursor: "pointer",
+      fontWeight: "bold",
+      outline: "none",
+      display: "flex",
+      alignItems: "center",
+      gap: "0.35rem",
+    }}
+  >
+    <span>🗑</span>
+    <span>Delete</span>
+  </button>
+)}
+
                   </div>
                 )}
               </div>
